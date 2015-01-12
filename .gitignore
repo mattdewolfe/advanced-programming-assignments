@@ -7,7 +7,12 @@
 *.sln.docstates
 
 # Build results
-[Dd]ebug/
+# Removed ignore for Debug folder, in order to store openGL.dll in that location
+# Added additional file ignores based on content of Debug folder
+*.tlog
+*.lastbuildstate
+*.exe
+*.log
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
