@@ -2,8 +2,7 @@
 #include <cmath>
 #include <iostream>
 
-#include "GameLogic.h"
-#include "VisualObject.h"
+#include "GameManager.h"
 #include "openGL/glut.h"
 
 #define PI 3.14159265
@@ -19,14 +18,15 @@ static GameManager gameManager;
 // Routine to output interaction instructions to the C++ window.
 void printInteraction(void)
 {
+
 }
 
 // Routine to draw a bitmap character string.
 void writeBitmapString(void *font, char *string)
-{  
+{
    char *c;
    for (c = string; *c != '\0'; c++) glutBitmapCharacter(font, *c);
-} 
+}
 
 // Initialization routine
 void setup(void) 
@@ -71,7 +71,7 @@ void drawScene(void)
 	int i, j;
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	DrawCrossHair();
+	//DrawCrossHair();
 	gameManager.DrawVisuals();
 	gameManager.Update();
 	glutSwapBuffers();
@@ -115,58 +115,18 @@ void keyInput(unsigned char key, int x, int y)
       case 27:
          exit(0);
          break;
+	  case 32:
+		  gameManager.ToggleMode();
       default:
          break;
    }
 }
 // Callback routine for non-ASCII key entry
 void specialKeyInput(int key, int x, int y)
-{
-	if (key == GLUT_KEY_LEFT) 
-	{ 
-		if (gameManager.moveLeft == false)
-			gameManager.moveLeft = true;
-	}
-	if (key == GLUT_KEY_RIGHT) 
-	{ 
-		if (gameManager.moveRight == false)
-			gameManager.moveRight = true;
-	}
-		if (key == GLUT_KEY_DOWN) 
-	{ 
-		if (gameManager.moveDown == false)
-			gameManager.moveDown = true;
-	}
-	if (key == GLUT_KEY_UP) 
-	{ 
-		if (gameManager.moveUp == false)
-			gameManager.moveUp = true;
-	}
-}
+{}
 // Callback routine for non-ASCII key release
 void specialKeyUp(int key, int x, int y)
-{
-	if (key == GLUT_KEY_LEFT) 
-	{ 
-		if (gameManager.moveLeft == true)
-			gameManager.moveLeft = false;
-	}
-	if (key == GLUT_KEY_RIGHT) 
-	{ 
-		if (gameManager.moveRight == true)
-			gameManager.moveRight = false;
-	}
-		if (key == GLUT_KEY_DOWN) 
-	{ 
-		if (gameManager.moveDown == true)
-			gameManager.moveDown = false;
-	}
-	if (key == GLUT_KEY_UP) 
-	{ 
-		if (gameManager.moveUp == true)
-			gameManager.moveUp = false;
-	}
-}
+{}
 // animation timer
 void animate(int value)
 {
@@ -181,7 +141,7 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH); 
 	glutInitWindowSize(1024, 768);
 	glutInitWindowPosition(250, 150); 
-	glutCreateWindow("War of Stars");
+	glutCreateWindow("Harvester");
 	setup(); 
 	glutDisplayFunc(drawScene); 
 	glutReshapeFunc(resize);  
@@ -198,31 +158,3 @@ int main(int argc, char **argv)
 	glutMainLoop(); 
 	return 0;  
 }
-
-/*
-// Function to check if two spheres centered at (x1,y1,z1) and (x2,y2,z2) with
-// radius r1 and r2 intersect.
-int checkSpheresIntersection(float x1, float y1, float z1, float r1, 
-						     float x2, float y2, float z2, float r2)
-{
-   return ( (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2) + (z1-z2)*(z1-z2) <= (r1+r2)*(r1+r2) );
-}
-
-// Function to check if the spacecraft collides with an asteroid when the center of the base
-// of the craft is at (x, 0, z) and it is aligned at an angle a to to the -z direction.
-// Collision detection is approximate as instead of the spacecraft we use a bounding sphere.
-int asteroidCraftCollision(float x, float z, float a)
-{
-   int i,j;
-
-   // Check for collision with each asteroid.
-   for (j=0; j<COLUMNS; j++)
-      for (i=0; i<ROWS; i++)
-		 if (arrayAsteroids[i][j].getRadius() > 0 ) // If asteroid exists.
-            if ( checkSpheresIntersection( x - 5 * sin( (PI/180.0) * a), 0.0, 
-		         z - 5 * cos( (PI/180.0) * a), 7.072, 
-		         arrayAsteroids[i][j].getCenterX(), arrayAsteroids[i][j].getCenterY(), 
-		         arrayAsteroids[i][j].getCenterZ(), arrayAsteroids[i][j].getRadius() ) )
-		       return 1;
-   return 0;
-}*/

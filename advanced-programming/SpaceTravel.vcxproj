@@ -80,24 +80,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GameManager.cpp" />
-    <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="HUD.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Terrain.cpp" />
-    <ClCompile Include="Tower.cpp" />
-    <ClCompile Include="VisualObject.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="CSingleton.h" />
-    <ClInclude Include="GameLogic.h" />
     <ClInclude Include="GameManager.h" />
-    <ClInclude Include="GameObject.h" />
     <ClInclude Include="HUD.h" />
-    <ClInclude Include="ObjectFactory.h" />
     <ClInclude Include="Score.h" />
-    <ClInclude Include="Terrain.h" />
-    <ClInclude Include="Tower.h" />
-    <ClInclude Include="VisualObject.h" />
     <ClInclude Include="VisualText.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
