@@ -2,8 +2,13 @@
 
 GameManager::GameManager()
 {
+	// In variables and buttons
 	gameState = MAIN_MENU;
 	SetupButtons();
+	score = 0;
+
+	// Seed random number pool with time
+	srand (time(NULL));
 }
 
 // Toggle between extract and scan mode, also calls toggle in HUD class
@@ -31,9 +36,29 @@ void GameManager::DrawGrid()
 		{
 			glPushMatrix();
 			glTranslatef(gridOffSetX + (i * TILE_SIZE), gridOffSetY + (j * TILE_SIZE), 0);
+			switch (mapArray[i][j]) {
+				case 0:
+					glColor3f(0.2, 0.2, 0.2);
+					break;
+				case 25:
+					glColor3f(1.0, 0.9, 0.0);
+					break;
+				case 50:
+					glColor3f(1.0, 0.5, 0.0);
+					break;
+				case 100:
+					glColor3f(1.0, 0.0, 0.0);
+					break;
+			}
+			glBegin(GL_TRIANGLE_STRIP);
+				glVertex3f(0, 0, -4);
+				glVertex3f(TILE_SIZE, 0, -4);
+				glVertex3f(TILE_SIZE, TILE_SIZE, -4);
+				glVertex3f(0, TILE_SIZE, -4);
+				glVertex3f(0, 0, -4);
+			glEnd();
 			glColor3f(1.0, 1.0, 1.0);
 			glLineWidth(2.0);
-		
 			glBegin(GL_LINE_STRIP);
 				glVertex3f(0, 0, -4);
 				glVertex3f(TILE_SIZE, 0, -4);
@@ -41,9 +66,8 @@ void GameManager::DrawGrid()
 				glVertex3f(0, TILE_SIZE, -4);
 				glVertex3f(0, 0, -4);
 			glEnd();
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-			glRectf(0, 0, 5, 5);
 			
+
 			glPopMatrix();
 		}
 	}
@@ -51,19 +75,83 @@ void GameManager::DrawGrid()
 }
 
 // Initialize the grid, randomize resource spawns
-void GameManager::SetupGame()
+void GameManager::SetupGame(int _numberOfRichMines, int _richMineValue)
 {
+	richMineValue = _richMineValue;
 	for (int i = 0; i < GRID_SIZE; i++)
 	{
 		for (int j = 0; j < GRID_SIZE; j++)
 		{
-
+			mapArray[i][j] = 0;
 		}
 	}
-	gridOffSetX = (GLUT_SCREEN_WIDTH - (GRID_SIZE*TILE_SIZE))/0.85;
+
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			mapArray[i][j] = 0;
+		}
+	}
+	for (int i = 0; i < _numberOfRichMines; i++)
+	{
+		CreateMine(rand()%16, rand()%16);
+	}
+	gridOffSetX = (GLUT_SCREEN_WIDTH - (GRID_SIZE*TILE_SIZE))/0.8;
 	gridOffSetY = (GLUT_SCREEN_HEIGHT - (GRID_SIZE*TILE_SIZE))/2;
 }
 
+// Insert a rich mine and populate adjacent areas
+void GameManager::CreateMine(int _x, int _y)
+{
+	mapArray[_x][_y] = richMineValue;
+	// Insert inner ring
+	int temp = richMineValue/2;
+	CreateNode(_x - 1, _y - 1, temp);
+	CreateNode(_x, _y - 1, temp);
+	CreateNode(_x + 1, _y - 1, temp);
+	CreateNode(_x - 1, _y, temp);
+	CreateNode(_x + 1, _y, temp);
+	CreateNode(_x - 1, _y + 1, temp);
+	CreateNode(_x, _y + 1, temp);
+	CreateNode(_x + 1, _y + 1, temp);
+
+	// Create outter ring
+	temp /= 2;
+	// Top line
+	CreateNode(_x - 2, _y - 2, temp);
+	CreateNode(_x - 1, _y - 2, temp);
+	CreateNode(_x, _y - 2, temp);
+	CreateNode(_x + 1, _y - 2, temp);
+	CreateNode(_x + 2, _y - 1, temp);
+	// Second line down
+	CreateNode(_x - 2, _y - 1, temp);
+	CreateNode(_x + 2, _y - 1, temp);
+	// Third line down
+	CreateNode(_x - 2, _y, temp);
+	CreateNode(_x + 2, _y, temp);
+	// Fourth line down
+	CreateNode(_x - 2, _y + 1, temp);
+	CreateNode(_x + 2, _y + 1, temp);
+	// Bottom line
+	CreateNode(_x - 2, _y + 2, temp);
+	CreateNode(_x - 1, _y + 2, temp);
+	CreateNode(_x, _y + 2, temp);
+	CreateNode(_x + 1, _y + 2, temp);
+	CreateNode(_x + 2, _y + 1, temp);
+
+}
+
+// Called by create mine to populate the lower tiers of resource
+void GameManager::CreateNode(int _x, int _y, int _value)
+{
+	// If the target position is legal, and the target value is lower
+	// than the current value in that position - set the new value
+	if (_x > -1 && _x < GRID_SIZE)
+		if (_y > -1 && _y < GRID_SIZE)
+			if (mapArray[_x][_y] < _value)
+				mapArray[_x][_y] = _value;
+}
 // Initial setup of buttons. should only be called once
 void GameManager::SetupButtons()
 {
@@ -114,7 +202,7 @@ void GameManager::DrawVisuals()
 	case SCAN_MODE:
 		DrawGrid();
 		DrawButton(TOGGLE_BUTTON);
-		hud.Draw();
+		hud.Draw(score);
 		break;
 	}
 }
@@ -129,7 +217,7 @@ void GameManager::Update()
 		break;
 
 	case START_GAME:
-		SetupGame();
+		SetupGame(4, 100);
 		gameState = SCAN_MODE;
 		break;
 

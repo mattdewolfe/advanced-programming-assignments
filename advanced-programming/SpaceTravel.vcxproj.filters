@@ -32,9 +32,6 @@
     <ClInclude Include="HUD.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Score.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="VisualText.h">
       <Filter>Header Files</Filter>
     </ClInclude>

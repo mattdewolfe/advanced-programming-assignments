@@ -2,8 +2,9 @@
 #define GAME_MANAGER_H
 #define GRID_SIZE 16
 #define TILE_SIZE 10
+
+#include <time.h>
 #include "HUD.h"
-#include "Score.h"
 #include "VisualText.h"
 
 class GameManager
@@ -11,8 +12,10 @@ class GameManager
 public:
 	GameManager(void);
 	virtual ~GameManager(void);
-	// tracks player score
-	Score score;
+	// Tracks player score
+	int score;
+	// Store the value of richest mine locations
+	int richMineValue;
 	// game state enum
 	enum GAMESTATE 
 	{ 
@@ -53,29 +56,34 @@ public:
 	GAMESTATE GetState() { return gameState; }	// get current state of state machine
 	// Toggle between scan mode and extract mode
 	void ToggleMode();
-	// draw visual objects as decided by gamestate
+	// Draw visual objects as decided by gamestate
 	void DrawVisuals();
-	// increment game state
+	// Increment game state
 	void Update();
-	// takes mouse value and performs action as dependent on game state
+	// Takes mouse value and performs action as dependent on game state
 	void MousePress(float _x, float _y);
 	
 private:
-	// buttons for main menu, setup in constructor
+	// Buttons for main menu, setup in constructor
 	Button buttons[BUTTONS_SIZE];
-	// draw text to screen
+	// Draw text to screen
 	VisualText visText;
-	// current state of game logic
+	// Current state of game logic
 	GAMESTATE gameState;
-	// heads up display
+	// Heads up display
 	HUD hud;
-	// setup button values
+	// Insert a rich mine into the map array at the specified location
+	// This will also populate adjacent nodes with lower tiers
+	void CreateMine(int _x, int _y);
+	// Called by create mine to populate lower tiers
+	void CreateNode(int _x, int _y, int _value);
+	// Setup button values
 	void SetupButtons();
-	// setup the grid with random resource locations
-	void SetupGame();
-	// draw the grid
+	// Setup the grid with random resource locations and set value for rich mines
+	void SetupGame(int _numberOfRichMines, int _richMineValue);
+	// Draw the grid
 	void DrawGrid();
-	// draw a button, as supplied with enum value
+	// Draw a button, as supplied with enum value
 	void DrawButton(BUTTONS _button);
 };
 
