@@ -5,10 +5,10 @@ HUD::HUD(void)
 	hudFont = (long)GLUT_BITMAP_8_BY_13;
 }
 // general hud draw call
-void HUD::Draw(int _score)
+void HUD::Draw(int _score, int _scans)
 {
 	glPushMatrix();
-	WriteData(_score);
+	WriteData(_score, _scans);
 	glPopMatrix();
 }
 
@@ -26,15 +26,21 @@ void HUD::FloatToString(char * destStr, int precision, int val)
 }
 
 // write standard text for ui elements
-void HUD::WriteData(int _score)
+void HUD::WriteData(int _score, int _scans)
 {
 	glColor3f(1.0, 0, 0);
-	glRasterPos3f(GLUT_SCREEN_WIDTH/8 - 5, 192.0f, -1.0f);
-	WriteBitmapString((void*)hudFont, "SCORE ");
-	FloatToString(hudStringBuffer, 8, _score);
+	glRasterPos3f(4.2f, 193.0f, -1.0f);
+	WriteBitmapString((void*)hudFont, "REMAINING SCANS: ");
+	FloatToString(hudStringBuffer, 8, _scans);
 	WriteBitmapString((void*)hudFont, hudStringBuffer);
 	
-		if (isExtractMode == true)
+	glColor3f(1.0, 0, 0);
+	glRasterPos3f(GLUT_SCREEN_WIDTH/8, 189.0f, -1.0f);
+	WriteBitmapString((void*)hudFont, "SCORE: ");
+	FloatToString(hudStringBuffer, 8, _score);
+	WriteBitmapString((void*)hudFont, hudStringBuffer);
+
+	if (isExtractMode == true)
 	{
 		glRasterPos3f(GLUT_SCREEN_WIDTH + 25 , 192.0f, -1.0f);
 		WriteBitmapString((void*)hudFont, "EXTRACT MODE");

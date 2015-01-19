@@ -14,6 +14,8 @@ public:
 	virtual ~GameManager(void);
 	// Tracks player score
 	int score;
+	// Tracks number of scans remaining
+	int scansRemaining;
 	// Store the value of richest mine locations
 	int richMineValue;
 	// game state enum
@@ -23,6 +25,7 @@ public:
 		SCAN_MODE,		// scan the grid 
 		EXTRACT_MODE,	// extract resources from grid
 		START_GAME,		// load level and transition into game
+		GAME_OVER, 
 		STATE_SIZE
 	};
 		
@@ -85,6 +88,8 @@ private:
 	void DrawGrid();
 	// Draw a button, as supplied with enum value
 	void DrawButton(BUTTONS _button);
+	// Check scans remaining and change state when needed
+	void CheckGameOver();
 };
 
 #endif

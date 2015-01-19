@@ -6,9 +6,16 @@ GameManager::GameManager()
 	gameState = MAIN_MENU;
 	SetupButtons();
 	score = 0;
-
+	scansRemaining = 6;
 	// Seed random number pool with time
 	srand (time(NULL));
+}
+
+// Check scans remaining and change state when needed
+void GameManager::CheckGameOver()
+{
+	if (scansRemaining <= 0)
+		gameState == GAME_OVER;
 }
 
 // Toggle between extract and scan mode, also calls toggle in HUD class
@@ -77,6 +84,8 @@ void GameManager::DrawGrid()
 // Initialize the grid, randomize resource spawns
 void GameManager::SetupGame(int _numberOfRichMines, int _richMineValue)
 {
+	scansRemaining = 6;
+
 	richMineValue = _richMineValue;
 	for (int i = 0; i < GRID_SIZE; i++)
 	{
@@ -152,6 +161,7 @@ void GameManager::CreateNode(int _x, int _y, int _value)
 			if (mapArray[_x][_y] < _value)
 				mapArray[_x][_y] = _value;
 }
+
 // Initial setup of buttons. should only be called once
 void GameManager::SetupButtons()
 {
@@ -181,7 +191,7 @@ void GameManager::DrawVisuals()
 	switch(gameState)
 	{
 	case MAIN_MENU:
-	#pragma region MainMenuVisuals
+		#pragma region MainMenuVisuals
 		glPushMatrix();
 		visText.SetColorFloatRGB(0.8, 0.4, 0.2);
 		visText.ReSizeFont(19);
@@ -196,13 +206,16 @@ void GameManager::DrawVisuals()
 			DrawButton(QUIT_BUTTON);
 		}
 		glPopMatrix();
-	#pragma endregion MainMenuVisuals
+		#pragma endregion MainMenuVisuals
 		break;
 	case EXTRACT_MODE:
 	case SCAN_MODE:
 		DrawGrid();
 		DrawButton(TOGGLE_BUTTON);
-		hud.Draw(score);
+		hud.Draw(score, scansRemaining);
+		break;
+	case GAME_OVER:
+
 		break;
 	}
 }
@@ -222,11 +235,14 @@ void GameManager::Update()
 		break;
 
 	case EXTRACT_MODE:
-		
+		CheckGameOver();
 		break;
 
 	case SCAN_MODE:
+		CheckGameOver();
+		break;
 
+	case GAME_OVER:
 		break;
 	}
 }
@@ -234,6 +250,11 @@ void GameManager::Update()
 // Handle mouse input, based on gamestate enum
 void GameManager::MousePress(float _inX, float _inY)
 {
+	std::cout << "OffX: " << gridOffSetX << " :: OffY : " << gridOffSetY << "\n";
+	std::cout << _inX << " :: " << _inY << "\n";
+	// We use this bool to avoid doing position checks after iterating
+	// through all the buttons. It will only be true if we hit a button
+	bool wasButton = false;
 	// Iterate through each button
 	for (int i = 0; i < BUTTONS_SIZE; i++)
 	{
@@ -248,16 +269,49 @@ void GameManager::MousePress(float _inX, float _inY)
 					// Main menu possibilities are to start the game, or quit the program
 					case MAIN_MENU:
 						if ((BUTTONS)i == START_BUTTON)
+						{
+							wasButton = true;
 							gameState = START_GAME;
+						}
 						else if ((BUTTONS)i == QUIT_BUTTON)
+						{
+							wasButton = true;
 							exit(0);
+						}
 						break;
 					// Scan mode and extract mode button possibitlites are limited to toggling between modes
 					case SCAN_MODE:
 					case EXTRACT_MODE:
 						if ((BUTTONS)i == TOGGLE_BUTTON)
+						{
+							wasButton = true;
 							ToggleMode();
+						}
 						break;
+				}
+			}
+		}
+	}
+	// Check X and Y for click, move from there
+	if (wasButton == false)
+	{
+		_inX -= gridOffSetX;
+		_inY -= gridOffSetY;
+		// Ensure the value, after subtracting offset, is still on the grid somewhere
+		if (_inX >= 0 && _inY >= 0)
+		{
+			// Divide X by tile size and see if it falls on grid
+			int xPos = _inX / TILE_SIZE;
+			if (xPos < GRID_SIZE)
+			{
+				// Divide Y by tile size, and see if it falls on grid
+				int yPos = _inY / TILE_SIZE;
+				if (yPos < GRID_SIZE)
+				{
+					std::cout << xPos << " :: " << yPos << "\n";
+					score += mapArray[xPos][yPos];
+					mapArray[xPos][yPos] = 0;
+					scansRemaining -= 1;
 				}
 			}
 		}
