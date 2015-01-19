@@ -12,6 +12,7 @@ static int animationPeriod = 33; // Time between draw calls
 static long font = (long)GLUT_BITMAP_8_BY_13; // Font selection
 static int width, height; // Size of the OpenGL window
 static float mouseX, mouseY;
+static float ratioX, ratioY;
 
 static GameManager gameManager;
 
@@ -36,42 +37,12 @@ void setup(void)
    glClearColor (0.0, 0.0, 0.0, 0.0);
 }
 
-void DrawCrossHair()
-{
-	glPushMatrix();
-		glColor3f(0.8, 0.8, 0.0);
-		glTranslatef(mouseX, mouseY, -1.0f);
-		glBegin(GL_TRIANGLES);
-		// upper left crosshair arrow
-		glVertex3f(-3, 4, 0);
-		glVertex3f(-0.5, 0.5, 0);
-		glVertex3f(-4, 3, 0);
-		// bottom left crosshair arrow
-		glVertex3f(-3, -4, 0);
-		glVertex3f(-0.5, -0.5, 0);
-		glVertex3f(-4, -3, 0);
-		// upper right crosshair arrow
-		glVertex3f(3, 4, 0);
-		glVertex3f(0.5, 0.5, 0);
-		glVertex3f(4, 3, 0);
-		// bottom right crosshair arrow
-		glVertex3f(3, -4, 0);
-		glVertex3f(0.5, -0.5, 0);
-		glVertex3f(4, -3, 0);
-	/*	glVertex3f(-2, -2, 0);
-		glVertex3f(-2, 2, 0);
-		glVertex3f(2, 2, 0);*/
-		glEnd();
-	glPopMatrix();
-}
-
 // Drawing routine
 void drawScene(void)
 {  
 	int i, j;
 	glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
-	//DrawCrossHair();
 	gameManager.DrawVisuals();
 	gameManager.Update();
 	glutSwapBuffers();
@@ -88,24 +59,27 @@ void resize(int w, int h)
    // Pass the size of the OpenGL window
    width = w;
    height = h;
+   std::cout << h;
+	
 }
 // Mouse callback routine.
 void mouseControl(int button, int state, int x, int y)
 {
 	// if left button is released, pass values to gameManager to make use of
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_UP)
-		gameManager.MousePress(x/3.84, 200 - y/3.84);
+		gameManager.MousePress(x/ratioX, 200 - y/ratioY);
 }
 // Mouse motion callback routine (for click and hold functionality)
 void mouseMotion(int x, int y)
 {
+
 }
 // Update mouse position regardless of button presses
 void passiveMotionFunc(int x, int y)
 {
 	// convert mouse cursor position into screen coordinates
-	mouseX = x/3.84;
-	mouseY = 200 - y/3.84;
+	mouseX = x/ratioX;
+	mouseY = 200 - y/ratioY;
 }
 // Keyboard input processing routine
 void keyInput(unsigned char key, int x, int y)
@@ -141,6 +115,8 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH); 
 	glutInitWindowSize(1024, 768);
 	glutInitWindowPosition(250, 150); 
+	ratioX = 3.84;
+	ratioY = 3.84;
 	glutCreateWindow("Harvester");
 	setup(); 
 	glutDisplayFunc(drawScene); 
@@ -150,8 +126,10 @@ int main(int argc, char **argv)
 	glutSpecialUpFunc(specialKeyUp);
 	// Mouse button push callback
 	glutMouseFunc(mouseControl); 
+
 	// Position of mouse cursor as dragged
 	glutMotionFunc(mouseMotion);
+
 	// Position of mouse cursor without clicks
 	glutPassiveMotionFunc(passiveMotionFunc);
 	glutTimerFunc(animationPeriod, animate, 1);
