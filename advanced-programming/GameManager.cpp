@@ -1,12 +1,8 @@
 #include "GameManager.h"
 
-GameManager::GameManager() : gameState(MAIN_MENU), 
-	score(0), 
-	scansRemaining(9), 
-	extractionsRemaining(6), 
-	scanResultTimeOut(28), 
-	scanResultTimer(0)
+GameManager::GameManager()
 {
+	ResetGame();
 	SetupButtons();
 	// Seed random number pool with time
 	srand (time(NULL));
@@ -102,18 +98,24 @@ void GameManager::SetupGame(int _numberOfRichMines)
 			mapArray[i][j] = TileInfo();
 		}
 	}
-
-	for (int i = 0; i < _numberOfRichMines; i++)
+	for (int i = 0; i < _numberOfRichMines; )
 	{
-		CreateMine(rand()%16, rand()%16);
+		if (CreateMine(rand()%16, rand()%16) == true)
+			i++;
 	}
 	gridOffSetX = (GLUT_SCREEN_WIDTH - (GRID_SIZE*TILE_SIZE))/0.8;
 	gridOffSetY = (GLUT_SCREEN_HEIGHT - (GRID_SIZE*TILE_SIZE))/2;
 }
 
 // Insert a rich mine and populate adjacent areas
-void GameManager::CreateMine(int _x, int _y)
+bool GameManager::CreateMine(int _x, int _y)
 {
+	// Check value in target location to ensure we are not
+	// within 2 nodes of an existing mine
+	if (mapArray[_x][_y].value > RICH_MINE_VALUE/4)
+	{
+		return false;
+	}
 	mapArray[_x][_y].value = RICH_MINE_VALUE;
 	// Insert inner ring
 	int temp = RICH_MINE_VALUE/2;
@@ -149,6 +151,8 @@ void GameManager::CreateMine(int _x, int _y)
 	CreateNode(_x, _y + 2, temp);
 	CreateNode(_x + 1, _y + 2, temp);
 	CreateNode(_x + 2, _y + 1, temp);
+
+	return true;
 }
 
 void GameManager::DisplayData(int _x, int _y)
@@ -247,6 +251,7 @@ void GameManager::DrawVisuals()
 	case GAME_OVER:
 		visText.SetColorFloatRGB(0.8, 0.8, 0.8);
 		visText.WriteBitmapString(100, 100, "GAME OVER");
+		hud.Draw(score, scansRemaining, extractionsRemaining);
 		break;
 	}
 }
@@ -387,6 +392,10 @@ void GameManager::MousePress(float _inX, float _inY)
 			}
 		}
 	}
+	if (gameState == GAME_OVER)
+	{
+		ResetGame();
+	}
 }
 
 // Draws a button to the screen - expects enum value to access button array
@@ -412,6 +421,17 @@ void GameManager::DrawButton(BUTTONS _bval)
 		glEnd();
 		glLineWidth(1.0);
 	glPopMatrix();
+}
+
+// Resets all key game values for a new game
+void GameManager::ResetGame()
+{
+	gameState = MAIN_MENU;
+	score = 0; 
+	scansRemaining = 9; 
+	extractionsRemaining = 6;
+	scanResultTimeOut = 28;
+	scanResultTimer = 0;
 }
 
 GameManager::~GameManager()

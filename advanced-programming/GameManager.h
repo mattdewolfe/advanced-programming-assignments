@@ -93,7 +93,7 @@ private:
 	HUD hud;
 	// Insert a rich mine into the map array at the specified location
 	// This will also populate adjacent nodes with lower tiers
-	void CreateMine(int _x, int _y);
+	bool CreateMine(int _x, int _y);
 	// Set information in a given node. Will set value if bool passed in is false
 	void CreateNode(int _x, int _y, int _value);
 	// Alter node visibilities (after a scan)
@@ -110,6 +110,8 @@ private:
 	void CheckGameOver();
 	// Switch map visuals back to extract mode
 	void SwitchToExtract();
+	// Reset all game values to prep for a new game
+	void ResetGame();
 };
 
 #endif
