@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
-
+#include <iomanip>
 #include "GameManager.h"
 #include "openGL/glut.h"
 
@@ -13,6 +13,7 @@ static long font = (long)GLUT_BITMAP_8_BY_13; // Font selection
 static int width, height; // Size of the OpenGL window
 static float mouseX, mouseY;
 static float ratioX, ratioY;
+static float originalWidth, originalHeight;
 
 static GameManager gameManager;
 
@@ -57,9 +58,12 @@ void resize(int w, int h)
    glOrtho(0.0, 266.0, 0.0, 200.0, 1.0, 300.0);
    glMatrixMode(GL_MODELVIEW);
    // Pass the size of the OpenGL window
+   // and update the ratios for mouse clicks
+   ratioX = 3.84 * (w/originalWidth);
+   ratioY = 3.84 * (h/originalHeight);
    width = w;
    height = h;
-   std::cout << h;
+   std::cout << w << " :: " << h << std::endl;
 	
 }
 // Mouse callback routine.
@@ -114,6 +118,9 @@ int main(int argc, char **argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH); 
 	glutInitWindowSize(1024, 768);
+	originalWidth = 1024;
+	originalHeight = 768;
+
 	glutInitWindowPosition(250, 150); 
 	ratioX = 3.84;
 	ratioY = 3.84;
