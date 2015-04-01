@@ -26,10 +26,8 @@
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Object Include="Debug\LoadShaders.obj">
+    <ClCompile Include="LoadShaders.cpp">
       <Filter>Source Files</Filter>
-    </Object>
+    </ClCompile>
   </ItemGroup>
 </Project>
