@@ -87,8 +87,16 @@
     <None Include="vshader53.glsl" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Disc.cpp" />
     <ClCompile Include="LoadShaders.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="Model.cpp" />
+    <ClCompile Include="Tower.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Disc.h" />
+    <ClInclude Include="Model.h" />
+    <ClInclude Include="Tower.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

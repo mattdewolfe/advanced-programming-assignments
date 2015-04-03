@@ -9,47 +9,30 @@
 #include "GL/glut.h"
 #include "LoadShaders.h"
 #include "vgl.h"
+#include "Tower.h"
+#include "Disc.h"
 
-typedef Angel::vec4  color4;
-typedef Angel::vec4  point4;
-
-// Total verts for
-// (6 faces)(2 triangles/face)(3 vertices/triangle) = 36 verts per quad
-// 3 towers, 6 discs = 9*36 = 324
-// 
-const int NumVertices = 324; 
-
-point4 points[NumVertices];
-vec3  normals[NumVertices];
-
-// Vertices of the towers
-point4 towerVertices[8] = {
-	point4(-0.05, -0.4, 0.05, 1.0),
-	point4(-0.05, 0.4, 0.05, 1.0),
-	point4(0.05, 0.4, 0.05, 1.0),
-	point4(0.05, -0.4, 0.05, 1.0),
-	point4(-0.05, -0.4, -0.05, 1.0),
-	point4(-0.05, 0.4, -0.05, 1.0),
-	point4(0.05, 0.4, -0.05, 1.0),
-	point4(0.05, -0.4, -0.05, 1.0)
-};
-
-// Vertices of the discs
-point4 discVertices[8] = {
-	point4(-0.2, -0.05, 0.2, 1.0),
-	point4(-0.2, 0.05, 0.2, 1.0),
-	point4(0.2, 0.05, 0.2, 1.0),
-	point4(0.2, -0.05, 0.2, 1.0),
-	point4(-0.2, -0.05, -0.2, 1.0),
-	point4(-0.2, 0.05, -0.2, 1.0),
-	point4(0.2, 0.05, -0.2, 1.0),
-	point4(0.2, -0.05, -0.2, 1.0)
-};
-
-// Current disk the player is moving
+// Current disc the player is moving
 int selectedDisc;
+// The tower that the selected disc belongs to
+int selectedDiscOwningTower;
+// Current tower selected to move a disc off of
+int selectedTower;
 // Store current level player is on
 int currentLevel;
+// Number of discs in this level
+int numberOfDiscs;
+// Number of towers in this level
+int numberOfTowers;
+// Number of disc moves this level
+int moveCount;
+
+Tower towers[4];
+Disc discs[6];
+
+void nextLevel();
+void checkVictory();
+void printDiscLocations();
 
 // Enum of gameplay states
 enum PlayState 
@@ -57,7 +40,8 @@ enum PlayState
 	Begin = 0, 
 	SelectDisc, 
 	SelectTower, 
-	DiscMoving
+	DiscMoving,
+	LevelComplete
 };
 PlayState state;
 
@@ -76,131 +60,10 @@ GLfloat Theta[NumAxes] = { 0.0, 0.0, 0.0 };
 // Model-view and projection matrices uniform location
 GLuint ModelView, Projection;
 
-//----------------------------------------------------------------------------
-// quad generates two triangles for each face and assigns colors to the vertices
-int Index = 0;
-
-void towerQuad(int a, int b, int c, int d, float offset)
-{
-	// Initialize temporary vectors along the quad's edge to
-	// compute its face normal 
-	point4 tempPoints[4];
-	tempPoints[0] = towerVertices[a];
-	tempPoints[0].x += offset;
-
-	tempPoints[1] = towerVertices[b];
-	tempPoints[1].x += offset;
-
-	tempPoints[2] = towerVertices[c];
-	tempPoints[2].x += offset;
-
-	tempPoints[3] = towerVertices[d];
-	tempPoints[3].x += offset;
-	/*
-	vec4 u = towerVertices[b] - towerVertices[a];
-	vec4 v = towerVertices[c] - towerVertices[b];
-	*/
-	vec4 u = towerVertices[1] - towerVertices[0];
-	vec4 v = towerVertices[2] - towerVertices[1];
-
-	vec3 normal = normalize(cross(u, v));
-
-	normals[Index] = normal; points[Index] = tempPoints[0]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[1]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[2]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[0]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[2]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[3]; Index++;
-}
-
-// generate 12 triangles: 36 vertices and 36 colors
-void tower(float offset = 0.0f)
-{
-	towerQuad(1, 0, 3, 2, offset);
-	towerQuad(2, 3, 7, 6, offset);
-	towerQuad(3, 0, 4, 7, offset);
-	towerQuad(6, 5, 1, 2, offset);
-	towerQuad(4, 5, 6, 7, offset);
-	towerQuad(5, 4, 0, 1, offset);
-}
-
-// Draw calls for the discs
-void discQuad(int a, int b, int c, int d, float offset)
-{
-	// Initialize temporary vectors along the quad's edge to
-	// compute its face normal 
-	point4 tempPoints[4];
-
-	tempPoints[0] = discVertices[a];
-	tempPoints[0].x -= 0.5f;
-	tempPoints[0].y += offset;
-
-	tempPoints[1] = discVertices[b];
-	tempPoints[1].x -= 0.5f;
-	tempPoints[1].y += offset;
-
-	tempPoints[2] = discVertices[c];
-	tempPoints[2].x -= 0.5f;
-	tempPoints[2].y += offset;
-
-	tempPoints[3] = discVertices[d];
-	tempPoints[3].x -= 0.5f;
-	tempPoints[3].y += offset;
-
-	vec4 u = tempPoints[1] - tempPoints[0];
-	vec4 v = tempPoints[2] - tempPoints[1];
-
-	vec3 normal = normalize(cross(u, v));
-
-	normals[Index] = normal; points[Index] = tempPoints[0]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[1]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[2]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[0]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[2]; Index++;
-	normals[Index] = normal; points[Index] = tempPoints[3]; Index++;
-}
-
-// generate 12 triangles: 36 vertices and 36 colors
-void disc(float offset = 0.0f)
-{
-	discQuad(1, 0, 3, 2, offset);
-	discQuad(2, 3, 7, 6, offset);
-	discQuad(3, 0, 4, 7, offset);
-	discQuad(6, 5, 1, 2, offset);
-	discQuad(4, 5, 6, 7, offset);
-	discQuad(5, 4, 0, 1, offset);
-}
-
 // OpenGL initialization
 void init()
 {
-	float tempOffset = -0.5f;
-	for (int i = 0; i < 3; i++)
-	{
-		tower(tempOffset);
-		tempOffset += 0.5f;
-	}
-	tempOffset = -0.4f;
-	for (int i = 0; i < 6; i++)
-	{
-		disc(tempOffset);
-		tempOffset += 0.1;
-	}
-	// Create a vertex array object
-	GLuint vao;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	// Create and initialize a buffer object
-	GLuint buffer;
-	glGenBuffers(1, &buffer);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(points) + sizeof(normals),
-		NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(points),
-		sizeof(normals), normals);
-
+	currentLevel = 0;
 	// Load shaders and use the resulting shader program
 	// GLuint program = InitShader("vshader53.glsl", "fshader53.glsl");
 
@@ -213,17 +76,24 @@ void init()
 	GLuint program = LoadShaders(shaders);
 
 	glUseProgram(program);
-
-	// set up vertex arrays
-	GLuint vPosition = glGetAttribLocation(program, "vPosition");
-	glEnableVertexAttribArray(vPosition);
-	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0,
-		BUFFER_OFFSET(0));
-
-	GLuint vNormal = glGetAttribLocation(program, "vNormal");
-	glEnableVertexAttribArray(vNormal);
-	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0,
-		BUFFER_OFFSET(sizeof(points)));
+	// Create towers
+	float tempOffsetX = -0.55f;
+	for (int i = 0; i < 4; i++)
+	{
+		towers[i].SetProgram(program);
+		towers[i].Create(tempOffsetX);
+		tempOffsetX += 0.4f;
+	}
+	// Create discs
+	tempOffsetX = -0.55f;
+	float tempOffsetY = -0.4f;
+	for (int i = 0; i < 6; i++)
+	{
+		discs[i].InitVertArray(i);
+		discs[i].SetProgram(program);
+		discs[i].Create(tempOffsetX, tempOffsetY);
+		tempOffsetY += 0.08;
+	}
 
 	// Initialize shader lighting parameters
 	point4 light_position(0.0, 0.0, 0.0, 0.0);
@@ -236,7 +106,7 @@ void init()
 	color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
 	color4 material_specular(1.0, 0.8, 0.0, 1.0);
 	
-	float  material_shininess = 100.0;
+	float material_shininess = 100.0;
 		
 	color4 ambient_product = light_ambient * material_ambient;
 	color4 other_ambient_light_product = other_ambient_light * material_ambient;
@@ -270,6 +140,8 @@ void init()
 	glShadeModel(GL_FLAT);
 
 	glClearColor(1.0, 1.0, 1.0, 1.0);
+
+	nextLevel();
 }
 
 // Draw call
@@ -287,8 +159,15 @@ void display(void)
 
 	glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
 
-	glDrawArrays(GL_TRIANGLES, 0, NumVertices);
-
+	// Iterate over all our objects and draw their verts
+	for (int i = 0; i < numberOfTowers; i++)
+	{
+		towers[i].Draw();
+	}
+	for (int i = 0; i < numberOfDiscs; i++)
+	{
+		discs[i].Draw();
+	}
 	glutSwapBuffers();
 }
 
@@ -307,42 +186,50 @@ void mouse(int button, int state, int x, int y)
 // Loop function for glut
 void idle(void)
 {
-	Theta[Axis] += 0.0;
-
 	if (Theta[Axis] > 360.0) 
 	{
 		Theta[Axis] -= 360.0;
 	}
-
+	
 	glutPostRedisplay();
 }
 
 // Function for handling key presses that manipulate towers
 void handleKeyPress(unsigned char _key)
 {
+	int keyVal = -1;
 	// Case for selecing a disc to move
 	if (state == SelectDisc)
 	{
 		switch (_key)
 		{
 		case '1':
-			// selectedDisc = tower[0].TopDisc();
+			keyVal = 0;
 			break;
 
 		case '2':
-			// selectedDisc = tower[1].TopDisc();
+			keyVal = 1;
 			break;
 
 		case '3':
-			// selectedDisc = tower[2].TopDisc();
+			keyVal = 2;
 			break;
 
 		case '4':
-			if (currentLevel > 1)
+			if (currentLevel == 2)
 			{
-				// selectedDisc = tower[3].TopDisc();
+				keyVal = 3;
 			}
 			break;
+		}
+		if (keyVal != -1)
+		{
+			if (towers[keyVal].GetTopDisc() > -1)
+			{
+				selectedDisc = towers[keyVal].GetTopDisc();
+				selectedDiscOwningTower = keyVal;
+				state = SelectTower;
+			}
 		}
 	}
 	// Case for selecing a tower to place the disc on
@@ -351,28 +238,55 @@ void handleKeyPress(unsigned char _key)
 		switch (_key)
 		{
 		case '1':
-			// selectedDisc = tower[0].TopDisc();
+			keyVal = 0;
 			break;
 
 		case '2':
-			// selectedDisc = tower[1].TopDisc();
+			keyVal = 1;
 			break;
 
 		case '3':
-			// selectedDisc = tower[2].TopDisc();
+			keyVal = 2;
 			break;
 
 		case '4':
-			if (currentLevel > 1)
+			if (currentLevel == 2)
 			{
-				// selectedDisc = tower[3].TopDisc();
+				keyVal = 3;
 			}
 			break;
 		}
+		// If the currently selected disc can go on this tower
+		if (towers[keyVal].PlaceDiscOnTower(selectedDisc) == true)
+		{
+			towers[selectedDiscOwningTower].RemoveTopDisc();
+			moveCount++;
+			selectedDisc = -1;
+			state = SelectDisc;
+		}
 	}
 	else if (state == DiscMoving)
-	{}
+	{
+		state = SelectDisc;
+	}
+	else if (state == LevelComplete)
+	{
+		nextLevel();
+	}
+	checkVictory();
+	printDiscLocations();
+}
 
+void checkVictory()
+{
+	// Check if a given tower has every disc on it
+	for (int i = 1; i < numberOfTowers; i++)
+	{ 
+		if (towers[i].GetDiscCount() >= numberOfDiscs)
+		{
+			state = LevelComplete;
+		}
+	}
 }
 
 // Callback function for glut keyboard
@@ -380,12 +294,6 @@ void keyboard(unsigned char key, int x, int y)
 {
 	switch (key) 
 	{
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-		handleKeyPress(key);
-		break;
 	case 'p':
 	case 'P':
 		Theta[Axis] += 1.0f;
@@ -399,12 +307,10 @@ void keyboard(unsigned char key, int x, int y)
 		exit(EXIT_SUCCESS);
 		break;
 	}
+	handleKeyPress(key);
 }
 
-//----------------------------------------------------------------------------
-
-void
-reshape(int width, int height)
+void reshape(int width, int height)
 {
 	glViewport(0, 0, width, height);
 
@@ -414,17 +320,84 @@ reshape(int width, int height)
 	glUniformMatrix4fv(Projection, 1, GL_TRUE, projection);
 }
 
-//----------------------------------------------------------------------------
+void printDiscLocations()
+{
+	system("cls");
+	// If the level is not complete, print disc location info
+	if (state != LevelComplete)
+	{
+		printf(" -- Current Disc Locations --\n");
+		for (int i = 0; i < numberOfTowers; i++)
+		{
+			printf("Tower #%d: ", i + 1);
+			towers[i].PrintTowerLocations();
+			printf("\n");
+		}
+		printf(" -- Selected Disc: %d", selectedDisc);
+		switch (state)
+		{
+		case SelectDisc:
+			printf("\n\n Select a tower to take the top disc from...\n");
+			break;
+		case SelectTower:
+			printf("\n\n Select a tower to place the selected disc onto...\n");
+			break;
+		default:
+			break;
+		}
+	}
+	// Otherwise print a level complete message
+	else
+	{
+		printf(" -- Congratulations -- \n\n");
+		printf(" -- You beat the level in %d moves!\n\n", moveCount);
+		printf(" Press any key to continue.\n");
+	}
+}
 
-int
-main(int argc, char **argv)
+void nextLevel()
+{
+	selectedDisc = 0;
+	selectedDiscOwningTower = 0;
+	selectedTower = 0;
+	moveCount = 0;
+	
+	currentLevel += 1;
+	switch (currentLevel)
+	{
+	case 1:
+		numberOfDiscs = 4;
+		numberOfTowers = 3;
+		break;
+	case 2:
+		numberOfDiscs = 5;
+		numberOfTowers = 4;
+		break;
+	case 3:
+		numberOfDiscs = 6;
+		numberOfTowers = 3;
+		break;
+	default:
+		numberOfDiscs = 4;
+		numberOfTowers = 3;
+		break;
+	}
+	// Push discs onto leftmost tower
+	towers[0].FillDiscArrayToIndex(numberOfDiscs);
+	for (int i = 1; i < numberOfTowers; i++)
+	{
+		towers[i].ClearDiscs();
+	}
+	state = SelectDisc;
+}
+
+int main(int argc, char **argv)
 {
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(512, 512);
-	//glutInitContextVersion(3, 2);
-	//glutInitContextProfile(GLUT_CORE_PROFILE);
-	glutCreateWindow("Color Cube");
+
+	glutCreateWindow("Towers of Hanoi");
 
 	glewInit();
 
