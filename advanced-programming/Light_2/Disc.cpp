@@ -28,26 +28,26 @@ void Disc::InitVertArray(int _discIndex)
 	bInitWasCalled = true;
 }
 
-void Disc::DiscQuad(int _a, int _b, int _c, int _d, float _offsetX, float _offsetY)
+void Disc::DiscQuad(int _a, int _b, int _c, int _d)
 {
 	// Initialize temporary vectors along the quad's edge to
 	// compute its face normal 
 	point4 tempPoints[4];
 	tempPoints[0] = discVertices[_a];
-	tempPoints[0].x += _offsetX;
-	tempPoints[0].y += _offsetY;
+	tempPoints[0].x += xOffset;
+	tempPoints[0].y += yOffset;
 
 	tempPoints[1] = discVertices[_b];
-	tempPoints[1].x += _offsetX;
-	tempPoints[1].y += _offsetY;
+	tempPoints[1].x += xOffset;
+	tempPoints[1].y += yOffset;
 
 	tempPoints[2] = discVertices[_c];
-	tempPoints[2].x += _offsetX;
-	tempPoints[2].y += _offsetY;
+	tempPoints[2].x += xOffset;
+	tempPoints[2].y += yOffset;
 
 	tempPoints[3] = discVertices[_d];
-	tempPoints[3].x += _offsetX;
-	tempPoints[3].y += _offsetY;
+	tempPoints[3].x += xOffset;
+	tempPoints[3].y += yOffset;
 
 	vec4 u = discVertices[1] - discVertices[0];
 	vec4 v = discVertices[2] - discVertices[1];
@@ -61,6 +61,42 @@ void Disc::DiscQuad(int _a, int _b, int _c, int _d, float _offsetX, float _offse
 	discNormals[currentIndex] = normal; discPoints[currentIndex] = tempPoints[2]; currentIndex++;
 	discNormals[currentIndex] = normal; discPoints[currentIndex] = tempPoints[3]; currentIndex++;
 }
+
+void Disc::SetTargetOffsets(float _xTarget, float _yTarget)
+{
+	xOffsetTargetValue = _xTarget;
+	yOffsetTargetValue = _yTarget;
+}
+
+bool Disc::UpdatePositions()
+{
+	bool moreUpdates = false;
+	// Check the discrepency between current offset and target offset values
+	if (yOffsetTargetValue - yOffset > 0.1f)
+	{
+		yOffset += 0.01f;
+		moreUpdates = true;
+	}
+	else if (yOffsetTargetValue - yOffset < -0.1f)
+	{
+		yOffset += -0.1f;
+		moreUpdates = true;
+	}
+	if (xOffsetTargetValue - xOffset > 0.1f)
+	{
+		xOffset = 0.01f;
+		moreUpdates = true;
+	}
+	else if (xOffsetTargetValue - xOffset < -0.1f)
+	{
+		xOffset = -0.1f;
+		moreUpdates = true;
+	}
+	currentIndex = 0;
+
+	return moreUpdates;
+}
+
 void Disc::Create(float _offsetX, float _offsetY)
 {
 	assert(bInitWasCalled);
@@ -72,12 +108,17 @@ void Disc::Create(float _offsetX, float _offsetY)
 	glGenBuffers(1, &vbos);
 	glBindBuffer(GL_ARRAY_BUFFER, vbos);
 	
-	DiscQuad(1, 0, 3, 2, _offsetX, _offsetY);
-	DiscQuad(2, 3, 7, 6, _offsetX, _offsetY);
-	DiscQuad(3, 0, 4, 7, _offsetX, _offsetY);
-	DiscQuad(6, 5, 1, 2, _offsetX, _offsetY);
-	DiscQuad(4, 5, 6, 7, _offsetX, _offsetY);
-	DiscQuad(5, 4, 0, 1, _offsetX, _offsetY);
+	SetTargetOffsets(_offsetX, _offsetY);
+	xOffset = _offsetX;
+	yOffset = _offsetY;
+	Update();
+
+	DiscQuad(1, 0, 3, 2);
+	DiscQuad(2, 3, 7, 6);
+	DiscQuad(3, 0, 4, 7);
+	DiscQuad(6, 5, 1, 2);
+	DiscQuad(4, 5, 6, 7);
+	DiscQuad(5, 4, 0, 1);
 
 	color = vec4(0.2f, _offsetY, _offsetX, 1.0f);
 

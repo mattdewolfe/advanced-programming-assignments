@@ -26,11 +26,6 @@ const GLuint Model::GetVbos() const
 	return vbos;
 }
 
-void Model::Destroy()
-{
-	glDeleteVertexArrays(1, &vao);
-}
-
-// Abstract functions
+void Model::Destroy(){}
 void Model::Draw(){}
 void Model::Update(){}

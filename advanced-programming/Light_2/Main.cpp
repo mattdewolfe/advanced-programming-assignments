@@ -26,6 +26,11 @@ int numberOfDiscs;
 int numberOfTowers;
 // Number of disc moves this level
 int moveCount;
+// Target tower of the disc that is moving
+int targetTower;
+// Screen space value between towers
+float towerGap = 0.4f;
+float towerStartPosition = -0.55f;
 
 Tower towers[4];
 Disc discs[6];
@@ -33,6 +38,7 @@ Disc discs[6];
 void nextLevel();
 void checkVictory();
 void printDiscLocations();
+void moveDisc();
 
 // Enum of gameplay states
 enum PlayState 
@@ -77,15 +83,15 @@ void init()
 
 	glUseProgram(program);
 	// Create towers
-	float tempOffsetX = -0.55f;
+	float tempOffsetX = towerStartPosition;
 	for (int i = 0; i < 4; i++)
 	{
 		towers[i].SetProgram(program);
 		towers[i].Create(tempOffsetX);
-		tempOffsetX += 0.4f;
+		tempOffsetX += towerGap;
 	}
 	// Create discs
-	tempOffsetX = -0.55f;
+	tempOffsetX = towerStartPosition;
 	float tempOffsetY = -0.4f;
 	for (int i = 0; i < 6; i++)
 	{
@@ -190,7 +196,10 @@ void idle(void)
 	{
 		Theta[Axis] -= 360.0;
 	}
-	
+	if (state == DiscMoving)
+	{
+		moveDisc();
+	}
 	glutPostRedisplay();
 }
 
@@ -227,6 +236,7 @@ void handleKeyPress(unsigned char _key)
 			if (towers[keyVal].GetTopDisc() > -1)
 			{
 				selectedDisc = towers[keyVal].GetTopDisc();
+				targetTower = -1;
 				selectedDiscOwningTower = keyVal;
 				state = SelectTower;
 			}
@@ -259,16 +269,28 @@ void handleKeyPress(unsigned char _key)
 		// If the currently selected disc can go on this tower
 		if (towers[keyVal].PlaceDiscOnTower(selectedDisc) == true)
 		{
+			// Calc target X position
+			float targetX = towerStartPosition + (towerGap*targetTower);
+			// Calc target Y position
+			float targetY = 0.4f;
+			if (towers[keyVal].GetDiscCount() > 0)
+			{
+				targetY += towers[keyVal].GetDiscCount()*0.08;
+			}
+			// Pass new target positions to target disc
+			discs[selectedDisc].SetTargetOffsets(targetX, targetY);
+			// Remove this disc from its old tower
 			towers[selectedDiscOwningTower].RemoveTopDisc();
+			// Update target tower to the specified tower
+			targetTower = keyVal;
+			// Increment move count for tracking
 			moveCount++;
-			selectedDisc = -1;
-			state = SelectDisc;
+			// Switch to disc movement state
+			state = DiscMoving;
 		}
 	}
 	else if (state == DiscMoving)
-	{
-		state = SelectDisc;
-	}
+	{}
 	else if (state == LevelComplete)
 	{
 		nextLevel();
@@ -277,6 +299,20 @@ void handleKeyPress(unsigned char _key)
 	printDiscLocations();
 }
 
+// Moves the selected disc towards its new tower
+void moveDisc()
+{
+	// Check to see if the current disc needs to continue moving
+	if (discs[selectedDisc].UpdatePositions() == false)
+	{ 
+		// If not change selection back to useless value
+		selectedDisc = -1;
+		// And switch back to selection state
+		state = SelectDisc;
+	}
+}
+
+// Check disc locations to see if player has won
 void checkVictory()
 {
 	// Check if a given tower has every disc on it
