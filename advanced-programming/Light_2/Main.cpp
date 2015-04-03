@@ -70,9 +70,10 @@ GLuint ModelView, Projection;
 void init()
 {
 	currentLevel = 0;
-	// Load shaders and use the resulting shader program
+	// alternate method
 	// GLuint program = InitShader("vshader53.glsl", "fshader53.glsl");
 
+	// Load shaders and program to use with towers
 	ShaderInfo shaders[] = {
 			{ GL_VERTEX_SHADER, "vshader53.glsl" },
 			{ GL_FRAGMENT_SHADER, "fshader53.glsl" },
@@ -90,6 +91,16 @@ void init()
 		towers[i].Create(tempOffsetX);
 		tempOffsetX += towerGap;
 	}
+
+	// Load shaders and program to use with discs
+	ShaderInfo discShaders[] = {
+			{ GL_VERTEX_SHADER, "vshaderForDisc.glsl" },
+			{ GL_FRAGMENT_SHADER, "fshader53.glsl" },
+			{ GL_NONE, NULL }
+	};
+
+	GLuint discProgram = LoadShaders(discShaders);
+
 	// Create discs
 	tempOffsetX = towerStartPosition;
 	float tempOffsetY = -0.4f;
@@ -101,7 +112,6 @@ void init()
 		tempOffsetY += 0.08;
 	}
 
-	// Initialize shader lighting parameters
 	point4 light_position(0.0, 0.0, 0.0, 0.0);
 	color4 light_ambient(1.0, 0.0, 0.0, 1.0);
 	color4 other_ambient_light(0.0, 1.0, 0.0, 1.0);
@@ -140,6 +150,7 @@ void init()
 	// Retrieve transformation uniform variable locations
 	ModelView = glGetUniformLocation(program, "ModelView");
 	Projection = glGetUniformLocation(program, "Projection");
+
 
 	glEnable(GL_DEPTH_TEST);
 

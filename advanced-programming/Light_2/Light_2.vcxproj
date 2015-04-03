@@ -85,6 +85,7 @@
   <ItemGroup>
     <None Include="fshader53.glsl" />
     <None Include="vshader53.glsl" />
+    <None Include="vshaderForDisc.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Disc.cpp" />

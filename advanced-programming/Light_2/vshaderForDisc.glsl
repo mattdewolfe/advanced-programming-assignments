@@ -10,6 +10,7 @@ uniform mat4 ModelView;
 uniform mat4 Projection;
 uniform vec4 LightPosition;
 uniform float Shininess;
+
 void main()
 {
     // Transform vertex position into eye coordinates
@@ -38,5 +39,4 @@ void main()
     gl_Position = Projection * ModelView * vPosition;
 	
 	color = ambient + diffuse + specular;
-	color.a = 1.0f;
 }

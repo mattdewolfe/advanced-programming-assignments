@@ -21,6 +21,9 @@
     <None Include="vshader53.glsl">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="vshaderForDisc.glsl">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
