@@ -24,6 +24,11 @@ public:
 	virtual const GLuint GetVbos()const;
 
 protected:
+	GLuint vPosition;
+	GLuint vNormal;
+	GLuint vColor;
+	GLuint vOffsetGPULocation;
+
 	// Target location when moving this object
 	point4 targetLocation;
 	// Current location for this object

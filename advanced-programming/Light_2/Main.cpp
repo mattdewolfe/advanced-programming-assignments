@@ -173,6 +173,7 @@ void display(void)
 	}
 	for (int i = 0; i < numberOfDiscs; i++)
 	{
+		discs[i].Update();
 		discs[i].Draw();
 	}
 	glutSwapBuffers();
