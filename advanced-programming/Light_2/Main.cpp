@@ -81,8 +81,8 @@ void init()
 	};
 
 	GLuint program = LoadShaders(shaders);
-
 	glUseProgram(program);
+	
 	// Create towers
 	float tempOffsetX = towerStartPosition;
 	for (int i = 0; i < 4; i++)
@@ -91,15 +91,6 @@ void init()
 		towers[i].Create(tempOffsetX);
 		tempOffsetX += towerGap;
 	}
-
-	// Load shaders and program to use with discs
-	ShaderInfo discShaders[] = {
-			{ GL_VERTEX_SHADER, "vshaderForDisc.glsl" },
-			{ GL_FRAGMENT_SHADER, "fshader53.glsl" },
-			{ GL_NONE, NULL }
-	};
-
-	GLuint discProgram = LoadShaders(discShaders);
 
 	// Create discs
 	tempOffsetX = towerStartPosition;
@@ -150,7 +141,6 @@ void init()
 	// Retrieve transformation uniform variable locations
 	ModelView = glGetUniformLocation(program, "ModelView");
 	Projection = glGetUniformLocation(program, "Projection");
-
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -278,7 +268,7 @@ void handleKeyPress(unsigned char _key)
 			break;
 		}
 		// If the currently selected disc can go on this tower
-		if (towers[keyVal].PlaceDiscOnTower(selectedDisc) == true)
+		if (keyVal != -1 && towers[keyVal].PlaceDiscOnTower(selectedDisc) == true)
 		{
 			// Calc target X position
 			float targetX = towerStartPosition + (towerGap*targetTower);
@@ -353,8 +343,10 @@ void keyboard(unsigned char key, int x, int y)
 	case 'q': case 'Q':
 		exit(EXIT_SUCCESS);
 		break;
+	default:
+		handleKeyPress(key);
+		break;
 	}
-	handleKeyPress(key);
 }
 
 void reshape(int width, int height)

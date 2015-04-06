@@ -137,10 +137,12 @@ void Tower::Create(float _offset)
 	TowerQuad(4, 5, 6, 7, _offset);
 	TowerQuad(5, 4, 0, 1, _offset);
 
+	targetLocation = vec4(0, 0, 0, 0);
+	currentLocation = vec4(0, 0, 0, 0);
 	color = vec4(1.0f, 0, 0, 1.0f);
 
 	// Define buffer size
-	glBufferData(GL_ARRAY_BUFFER, (sizeof(towerPoints)+sizeof(towerNormals)+sizeof(color)),
+	glBufferData(GL_ARRAY_BUFFER, (sizeof(towerPoints)+sizeof(towerNormals)+sizeof(color)+sizeof(currentLocation)),
 		NULL, GL_STATIC_DRAW);
 	// Define memory location tower points and pass in array
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(towerPoints), towerPoints);
@@ -150,22 +152,31 @@ void Tower::Create(float _offset)
 	// Define memory location for color and pass in vec
 	glBufferSubData(GL_ARRAY_BUFFER, (sizeof(towerPoints) + sizeof(towerNormals)),
 		sizeof(color), color);
+	// Define memory location for position off set and pass in vec
+	glBufferSubData(GL_ARRAY_BUFFER, (sizeof(towerPoints) + sizeof(towerNormals) + sizeof(color) ),
+		sizeof(currentLocation), currentLocation);
 
 	// Create attrib values for use in shader language
-	GLuint vPosition = glGetAttribLocation(program, "vPosition");
-	glEnableVertexAttribArray(vPosition);
+	GLuint vPosition = 0;
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0,
 		BUFFER_OFFSET(0));
-
-	GLuint vNormal = glGetAttribLocation(program, "vNormal");
-	glEnableVertexAttribArray(vNormal);
+	glEnableVertexAttribArray(vPosition);
+	
+	GLuint vNormal = 1;
 	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0,
 		BUFFER_OFFSET(sizeof(towerPoints)));
-
-	GLuint baseColor = glGetAttribLocation(program, "baseColor");
-	glEnableVertexAttribArray(baseColor);
-	glVertexAttribPointer(baseColor, 4, GL_FLOAT, GL_FALSE, 0,
+	glEnableVertexAttribArray(vNormal);
+	
+	GLuint vColor = 2;
+	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0,
 		BUFFER_OFFSET(sizeof(towerPoints)+sizeof(towerNormals)) );
+	glEnableVertexAttribArray(vColor);
+	
+	GLuint vOffset = 3;
+	glVertexAttribPointer(vOffset, 4, GL_FLOAT, GL_FALSE, 0,
+		BUFFER_OFFSET(sizeof(towerPoints)+sizeof(towerNormals)+sizeof(color)) );
+	glEnableVertexAttribArray(vOffset);
+	
 }
 
 void Tower::Update()

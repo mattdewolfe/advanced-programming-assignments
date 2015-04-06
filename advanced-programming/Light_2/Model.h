@@ -24,6 +24,11 @@ public:
 	virtual const GLuint GetVbos()const;
 
 protected:
+	// Target location when moving this object
+	point4 targetLocation;
+	// Current location for this object
+	point4 currentLocation;
+	// Color of this object
 	color4 color;
 	GLuint vao;
 	GLuint program;
