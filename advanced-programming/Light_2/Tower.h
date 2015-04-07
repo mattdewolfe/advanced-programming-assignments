@@ -27,7 +27,7 @@ public:
 private:
 	// Create a quad for this tower
 	// A, B, C, and D are references to the vertices array
-	void TowerQuad(int _a, int _b, int _c, int _d, float _offset);
+	void TowerQuad(int _a, int _b, int _c, int _d);
 
 	// Global index counter
 	int currentIndex;

@@ -4,18 +4,18 @@
 class Disc : public Model
 {
 public:
-	Disc();
+	Disc(int _discSize);
 	~Disc();
 	// Used to initialize the point vertices to build disc from
 	// This must be called before Create or Draw
 	void InitVertArray(int _discIndex);
 
-	void Create(float _offsetX, float _offsetY);
+	void Create(float _offsetX, float _offsetY, vec4 _color);
 	// Set a new target position
 	void SetTargetOffsets(float _xTarget, float _yTarget);
 	// Moves disc towards its new location, returns false when no further udpates
 	bool UpdatePositions();
-	
+	void ResetPosition(float _xTarget, float _yTarget);
 	virtual void Draw() override final;
 	virtual void Update() override final;
 
@@ -35,5 +35,9 @@ private:
 	point4 discPoints[discVerticesCount];
 	// Array for normals of quads
 	vec3 discNormals[discVerticesCount];
+	// Size of this disc relative to those on the tower. 0 is largest
+	int size;
+	// Flag for when this disc is being moved
+	bool isMoving;
 };
 

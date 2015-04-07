@@ -2,10 +2,10 @@
 
 layout(location = 0) in vec4 vPosition;
 layout(location = 1) in vec3 vNormal;
-layout(location = 2) in vec4 vColor;
 out vec4 color;
 
 uniform vec4 vOffset;
+uniform vec4 vColor;
 uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct;
 uniform mat4 ModelView;
 uniform mat4 Projection;
@@ -38,9 +38,9 @@ void main()
 		specular = vec4(0.0, 0.0, 0.0, 1.0);
 	} 
 
-	color = ambient + diffuse + specular +vColor;
-	color.a = 1.0f;
+	//color = ambient + diffuse + specular;
+	color = vColor;
 	
-    gl_Position = Projection * ModelView * (vPosition+vOffset);
+    gl_Position = Projection * ModelView * (vPosition + vOffset);
 	
 }

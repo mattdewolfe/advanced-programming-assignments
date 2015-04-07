@@ -95,22 +95,18 @@ void Tower::FillDiscArrayToIndex(int _index)
 	}
 }
 
-void Tower::TowerQuad(int _a, int _b, int _c, int _d, float _offset)
+void Tower::TowerQuad(int _a, int _b, int _c, int _d)
 {
 	// Initialize temporary vectors along the quad's edge to
 	// compute its face normal 
 	point4 tempPoints[4];
 	tempPoints[0] = towerVertices[_a];
-	tempPoints[0].x += _offset;
 
 	tempPoints[1] = towerVertices[_b];
-	tempPoints[1].x += _offset;
 
 	tempPoints[2] = towerVertices[_c];
-	tempPoints[2].x += _offset;
 
 	tempPoints[3] = towerVertices[_d];
-	tempPoints[3].x += _offset;
 
 	vec4 u = towerVertices[1] - towerVertices[0];
 	vec4 v = towerVertices[2] - towerVertices[1];
@@ -134,33 +130,27 @@ void Tower::Create(float _offset)
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	TowerQuad(1, 0, 3, 2, _offset);
-	TowerQuad(2, 3, 7, 6, _offset);
-	TowerQuad(3, 0, 4, 7, _offset);
-	TowerQuad(6, 5, 1, 2, _offset);
-	TowerQuad(4, 5, 6, 7, _offset);
-	TowerQuad(5, 4, 0, 1, _offset);
+	TowerQuad(1, 0, 3, 2);
+	TowerQuad(2, 3, 7, 6);
+	TowerQuad(3, 0, 4, 7);
+	TowerQuad(6, 5, 1, 2);
+	TowerQuad(4, 5, 6, 7);
+	TowerQuad(5, 4, 0, 1);
 
-	targetLocation = vec4(0, 0, 0, 0);
-	currentLocation = vec4(0, 0, 0, 0);
-	color = vec4(1.0f, 0, 0, 1.0f);
+	targetLocation = vec4(_offset, 0, 0, 0);
+	currentLocation = vec4(_offset, 0, 0, 0);
+	color = vec4(0.7f, 0.25f, 0.7f, 1.0f);
 
 	// Define buffer size
 	glBufferData(GL_ARRAY_BUFFER, sizeof(towerPoints) + sizeof(towerNormals) + sizeof(color) + sizeof(currentLocation),
 		NULL, GL_STATIC_DRAW);
 	// Define memory location tower points and pass in array
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(towerPoints), towerPoints);
-	// Define memory location tower normals and pass in array
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(towerPoints),
-		sizeof(towerNormals), towerNormals);
-	// Define memory location for color and pass in vec
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(towerPoints) + sizeof(towerNormals),
-		sizeof(color), color);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(towerPoints), sizeof(towerNormals), towerNormals);
 
 	// Create attrib values for use in shader language
 	glEnableVertexAttribArray(vPosition);
 	glEnableVertexAttribArray(vNormal);
-	glEnableVertexAttribArray(vColor);
 
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat),
 		BUFFER_OFFSET(0));
@@ -170,21 +160,22 @@ void Tower::Create(float _offset)
 		BUFFER_OFFSET(sizeof(towerPoints)*towerVerticesCount) );
 	glBindAttribLocation(program, vNormal, "vNormal");
 	
-	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat),
-		BUFFER_OFFSET( sizeof(towerPoints)*towerVerticesCount+sizeof(towerNormals)*towerVerticesCount ) );
-	glBindAttribLocation(program, vColor, "vColor");
-	
+	vColor = glGetUniformLocation(program, "vColor");
 	vOffsetGPULocation = glGetUniformLocation(program, "vOffset");
 }
 
 void Tower::Update()
 {
-	glUniform4f(vOffsetGPULocation, currentLocation.x,currentLocation.y, currentLocation.z, currentLocation.w);
+	Draw();
 }
 
 void Tower::Draw()
 {
+	vColor = glGetUniformLocation(program, "vColor");
+	vOffsetGPULocation = glGetUniformLocation(program, "vOffset");
 	glUseProgram(program);
+	glUniform4fv(vOffsetGPULocation, 1, currentLocation);
+	glUniform4fv(vColor, 1, color);
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, towerVerticesCount);
 }

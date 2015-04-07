@@ -33,7 +33,7 @@ float towerGap = 0.4f;
 float towerStartPosition = -0.55f;
 
 Tower towers[4];
-Disc discs[6];
+Disc* discs[6];
 
 void nextLevel();
 void checkVictory();
@@ -95,21 +95,25 @@ void init()
 	// Create discs
 	tempOffsetX = towerStartPosition;
 	float tempOffsetY = -0.4f;
+	vec4 discColor = vec4(0.8f, 0.1f, 0.2f, 1.0f);
 	for (int i = 0; i < 6; i++)
 	{
-		discs[i].InitVertArray(i);
-		discs[i].SetProgram(program);
-		discs[i].Create(tempOffsetX, tempOffsetY);
-		tempOffsetY += 0.08;
+		discs[i] = new Disc(i);
+		discs[i]->InitVertArray(i);
+		discs[i]->SetProgram(program);
+		discs[i]->Create(tempOffsetX, tempOffsetY, discColor);
+		discColor.y += 0.15f;
+		discColor.x -= 0.1f;
+		tempOffsetY += 0.08f;
 	}
 
 	point4 light_position(0.0, 0.0, 0.0, 0.0);
 	color4 light_ambient(1.0, 0.0, 0.0, 1.0);
-	color4 other_ambient_light(0.0, 1.0, 0.0, 1.0);
+	color4 other_ambient_light(1.0, 1.0, 1.0, 1.0);
 	color4 light_diffuse(0.0, 1.0, 0.0, 1.0);
 	color4 light_specular(1.0, 1.0, 1.0, 1.0);
 
-	color4 material_ambient(1.0, 0.0, 0.0, 1.0);
+	color4 material_ambient(1.0, 1.0, 0.0, 1.0);
 	color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
 	color4 material_specular(1.0, 0.8, 0.0, 1.0);
 	
@@ -165,16 +169,15 @@ void display(void)
 		RotateZ(Theta[Zaxis]));
 
 	glUniformMatrix4fv(ModelView, 1, GL_TRUE, model_view);
-
+	
 	// Iterate over all our objects and draw their verts
 	for (int i = 0; i < numberOfTowers; i++)
 	{
-		towers[i].Draw();
+		towers[i].Update();
 	}
 	for (int i = 0; i < numberOfDiscs; i++)
 	{
-		discs[i].Update();
-		discs[i].Draw();
+		discs[i]->Update();
 	}
 	glutSwapBuffers();
 }
@@ -201,6 +204,10 @@ void idle(void)
 	if (state == DiscMoving)
 	{
 		moveDisc();
+	}
+	else
+	{
+		checkVictory();
 	}
 	glutPostRedisplay();
 }
@@ -272,15 +279,15 @@ void handleKeyPress(unsigned char _key)
 		if (keyVal != -1 && towers[keyVal].PlaceDiscOnTower(selectedDisc) == true)
 		{
 			// Calc target X position
-			float targetX = towerStartPosition + (towerGap*targetTower);
+			float targetX = towerStartPosition + (towerGap*keyVal);
 			// Calc target Y position
-			float targetY = 0.4f;
+			float targetY = -0.4f;
 			if (towers[keyVal].GetDiscCount() > 0)
 			{
-				targetY += towers[keyVal].GetDiscCount()*0.08;
+				targetY += (towers[keyVal].GetDiscCount()-1)*0.08;
 			}
 			// Pass new target positions to target disc
-			discs[selectedDisc].SetTargetOffsets(targetX, targetY);
+			discs[selectedDisc]->SetTargetOffsets(targetX, targetY);
 			// Remove this disc from its old tower
 			towers[selectedDiscOwningTower].RemoveTopDisc();
 			// Update target tower to the specified tower
@@ -297,7 +304,7 @@ void handleKeyPress(unsigned char _key)
 	{
 		nextLevel();
 	}
-	checkVictory();
+	
 	printDiscLocations();
 }
 
@@ -305,7 +312,7 @@ void handleKeyPress(unsigned char _key)
 void moveDisc()
 {
 	// Check to see if the current disc needs to continue moving
-	if (discs[selectedDisc].UpdatePositions() == false)
+	if (discs[selectedDisc]->UpdatePositions() == false)
 	{ 
 		// If not change selection back to useless value
 		selectedDisc = -1;
@@ -427,6 +434,13 @@ void nextLevel()
 	for (int i = 1; i < numberOfTowers; i++)
 	{
 		towers[i].ClearDiscs();
+	}
+
+	float tempOffsetY = -0.4f;
+	for (int i = 0; i < 6; i++)
+	{
+		discs[i]->ResetPosition(towerStartPosition, tempOffsetY);
+		tempOffsetY += 0.08f;
 	}
 	state = SelectDisc;
 }

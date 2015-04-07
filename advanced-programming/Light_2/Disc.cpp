@@ -1,8 +1,10 @@
 #include "Disc.h"
 
-Disc::Disc() :
+Disc::Disc(int _discSize) :
 currentIndex(0),
-bInitWasCalled(false)
+bInitWasCalled(false),
+size(_discSize),
+isMoving(false)
 {
 	vPosition = 0;
 	vNormal = 1;
@@ -37,16 +39,12 @@ void Disc::DiscQuad(int _a, int _b, int _c, int _d)
 	// compute its face normal 
 	point4 tempPoints[4];
 	tempPoints[0] = discVertices[_a];
-	tempPoints[0] += currentLocation;
 
 	tempPoints[1] = discVertices[_b];
-	tempPoints[1] += currentLocation;
 
 	tempPoints[2] = discVertices[_c];
-	tempPoints[2] += currentLocation;
 
 	tempPoints[3] = discVertices[_d];
-	tempPoints[3] += currentLocation;
 
 	vec4 u = discVertices[1] - discVertices[0];
 	vec4 v = discVertices[2] - discVertices[1];
@@ -61,40 +59,56 @@ void Disc::DiscQuad(int _a, int _b, int _c, int _d)
 	discNormals[currentIndex] = normal; discPoints[currentIndex] = tempPoints[3]; currentIndex++;
 }
 
+void Disc::ResetPosition(float _xTarget, float _yTarget)
+{
+	currentLocation = vec4(_xTarget, _yTarget, 0, 0);
+	targetLocation = currentLocation;
+}
+
 void Disc::SetTargetOffsets(float _xTarget, float _yTarget)
 {
 	targetLocation = vec4(_xTarget, _yTarget, 0, 0);
+	
+	isMoving = true;
 }
 
 bool Disc::UpdatePositions()
 {
-	bool moreUpdates = false;
-	// Check the discrepency between current offset and target offset values
-	if (targetLocation.y - currentLocation.y > 0.05f)
+	if (isMoving == true)
 	{
-		currentLocation.y += 0.01f;
-		moreUpdates = true;
+		// If X no longer matches
+		float tempX = targetLocation.x - currentLocation.x;
+		if (tempX < -0.002f || tempX > 0.002f)
+		{
+			// We first climb to a new Y value
+			if (currentLocation.y < 0.5)
+			{
+				currentLocation.y += 0.0005f;
+			}
+			// From there we move across the screen to 
+			else if (targetLocation.x > currentLocation.x)
+			{ 
+				currentLocation.x += 0.0005f;
+			}
+			else
+			{
+				currentLocation.x -= 0.0005f;
+			}
+		}
+		// Once X is lined up, we reduce Y again to reach our target Y
+		else if (targetLocation.y < currentLocation.y)
+		{
+			currentLocation.y -= 0.0005f;
+		}
+		else
+		{
+			isMoving = false;
+		}
 	}
-	else if (targetLocation.y - currentLocation.y < -0.05f)
-	{
-		currentLocation.y -= 0.01f;
-		moreUpdates = true;
-	}
-	if (targetLocation.x - currentLocation.x > 0.05f)
-	{
-		currentLocation.x += 0.01f;
-		moreUpdates = true;
-	}
-	else if (targetLocation.x - currentLocation.x < -0.05f)
-	{
-		currentLocation.x -= 0.01f;
-		moreUpdates = true;
-	}
-
-	return moreUpdates;
+	return isMoving;
 }
 
-void Disc::Create(float _offsetX, float _offsetY)
+void Disc::Create(float _offsetX, float _offsetY, vec4 _color)
 {
 	assert(bInitWasCalled);
 	// Create and initialize a buffer object
@@ -104,7 +118,7 @@ void Disc::Create(float _offsetX, float _offsetY)
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	SetTargetOffsets(_offsetX, _offsetY);
+	targetLocation = vec4(_offsetX, _offsetY, 0, 0);
 	currentLocation = targetLocation;
 
 	DiscQuad(1, 0, 3, 2);
@@ -114,27 +128,19 @@ void Disc::Create(float _offsetX, float _offsetY)
 	DiscQuad(4, 5, 6, 7);
 	DiscQuad(5, 4, 0, 1);
 	
-	color = vec4(0.2f, _offsetY, _offsetX, 1.0f);
+	color = _color;
 
 	// Define buffer size
-	glBufferData(GL_ARRAY_BUFFER, (sizeof(discPoints) + sizeof(discNormals) + sizeof(color) + sizeof(currentLocation)),
+	glBufferData(GL_ARRAY_BUFFER, (sizeof(discPoints) + sizeof(discNormals)),
 		NULL, GL_STATIC_DRAW);
 
 	// Define memory location for disc points and pass in array
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(discPoints), discPoints);
-	
-	// Define memory location for disc normals and pass in array
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(discPoints),
-		sizeof(discNormals), discNormals);
-	
-	// Define memory location for disc color and pass in vec
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(discPoints) + sizeof(discNormals),
-		sizeof(color), color);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(discPoints), sizeof(discNormals), discNormals);
 	
 	// Create attrib values for use in shader language
 	glEnableVertexAttribArray(vPosition);
 	glEnableVertexAttribArray(vNormal);
-	glEnableVertexAttribArray(vColor);
 
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat),
 		BUFFER_OFFSET(0));
@@ -144,23 +150,22 @@ void Disc::Create(float _offsetX, float _offsetY)
 		BUFFER_OFFSET(sizeof(discPoints)*discVerticesCount) );
 	glBindAttribLocation(program, vNormal, "vNormal");
 	
-	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 4*sizeof(GLfloat),
-		BUFFER_OFFSET(sizeof(discPoints)*discVerticesCount + sizeof(discNormals)*discVerticesCount) );
-	glBindAttribLocation(program, vColor, "vColor");
-	
+	vColor = glGetUniformLocation(program, "vColor");
 	vOffsetGPULocation = glGetUniformLocation(program, "vOffset");
 }
 
 void Disc::Update()
 {
-	currentLocation.x += 0.01f;
-	// Define memory location for position off set and pass in vec
-	glUniform4f(vOffsetGPULocation, currentLocation.x,currentLocation.y, currentLocation.z, currentLocation.w);
+	Draw();
 }
 
 void Disc::Draw()
 {
+	vColor = glGetUniformLocation(program, "vColor");
+	vOffsetGPULocation = glGetUniformLocation(program, "vOffset");
 	glUseProgram(program);
+	glUniform4fv(vOffsetGPULocation, 1, currentLocation);
+	glUniform4fv(vColor, 1, color);
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, discVerticesCount);
 }
