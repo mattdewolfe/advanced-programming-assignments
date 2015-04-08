@@ -69,7 +69,6 @@ GLuint ModelView, Projection;
 // OpenGL initialization
 void init()
 {
-	currentLevel = 0;
 	// alternate method
 	// GLuint program = InitShader("vshader53.glsl", "fshader53.glsl");
 
@@ -152,6 +151,7 @@ void init()
 
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 
+	currentLevel = 0;
 	nextLevel();
 }
 
@@ -204,6 +204,10 @@ void idle(void)
 	if (state == DiscMoving)
 	{
 		moveDisc();
+	}
+	else if (state == LevelComplete)
+	{
+		nextLevel();
 	}
 	else
 	{
@@ -300,10 +304,6 @@ void handleKeyPress(unsigned char _key)
 	}
 	else if (state == DiscMoving)
 	{}
-	else if (state == LevelComplete)
-	{
-		nextLevel();
-	}
 	
 	printDiscLocations();
 }
@@ -408,8 +408,8 @@ void nextLevel()
 	selectedDiscOwningTower = 0;
 	selectedTower = 0;
 	moveCount = 0;
-	
 	currentLevel += 1;
+	
 	switch (currentLevel)
 	{
 	case 1:
@@ -437,7 +437,7 @@ void nextLevel()
 	}
 
 	float tempOffsetY = -0.4f;
-	for (int i = 0; i < 6; i++)
+	for (int i = 0; i < numberOfDiscs; i++)
 	{
 		discs[i]->ResetPosition(towerStartPosition, tempOffsetY);
 		tempOffsetY += 0.08f;

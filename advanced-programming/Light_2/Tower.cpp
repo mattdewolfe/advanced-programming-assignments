@@ -42,8 +42,8 @@ bool Tower::PlaceDiscOnTower(int _discNumber)
 	// If we are at index -1, there are no discs on this tower yet
 	if (topDiscIndex == -1)
 	{
-		discs[0] = _discNumber;
 		topDiscIndex = 0;
+		discs[topDiscIndex] = _discNumber;
 	}
 	// If the top disc has a larger index then the disc the user wants
 	// to place here, then they cannot as that would be a larger disc on top
