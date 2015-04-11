@@ -16,7 +16,7 @@ public:
 	// Moves disc towards its new location, returns false when no further udpates
 	bool UpdatePositions();
 	void ResetPosition(float _xTarget, float _yTarget);
-	virtual void Draw() override final;
+	virtual void Draw(GLuint _modelView, mat4 _modelMat) override final;
 	virtual void Update() override final;
 
 private:

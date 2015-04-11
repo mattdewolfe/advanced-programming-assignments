@@ -143,7 +143,7 @@ void Tower::Create(float _offset)
 
 	// Define buffer size
 	glBufferData(GL_ARRAY_BUFFER, sizeof(towerPoints) + sizeof(towerNormals) + sizeof(color) + sizeof(currentLocation),
-		NULL, GL_STATIC_DRAW);
+		NULL, GL_DYNAMIC_DRAW);
 	// Define memory location tower points and pass in array
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(towerPoints), towerPoints);
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(towerPoints), sizeof(towerNormals), towerNormals);
@@ -166,16 +166,19 @@ void Tower::Create(float _offset)
 
 void Tower::Update()
 {
-	Draw();
 }
 
-void Tower::Draw()
+void Tower::Draw(GLuint _modelView, mat4 _modelMat)
 {
+	glUseProgram(program);
+	glUniformMatrix4fv(_modelView, 1, GL_TRUE, _modelMat);
+
 	vColor = glGetUniformLocation(program, "vColor");
 	vOffsetGPULocation = glGetUniformLocation(program, "vOffset");
-	glUseProgram(program);
+	
 	glUniform4fv(vOffsetGPULocation, 1, currentLocation);
 	glUniform4fv(vColor, 1, color);
+	
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLES, 0, towerVerticesCount);
 }

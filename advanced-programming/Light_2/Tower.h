@@ -7,7 +7,7 @@ public:
 	~Tower();
 
 	void Create(float _offset);
-	virtual void Draw() override final;
+	virtual void Draw(GLuint _modelView, mat4 _modelMat) override final;
 	virtual void Update() override;
 	// Attempt to place the selected disc on this tower
 	bool PlaceDiscOnTower(int _discNumber);

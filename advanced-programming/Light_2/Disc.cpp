@@ -111,12 +111,13 @@ bool Disc::UpdatePositions()
 void Disc::Create(float _offsetX, float _offsetY, vec4 _color)
 {
 	assert(bInitWasCalled);
+
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+
 	// Create and initialize a buffer object
 	glGenBuffers(1, &vbos);
 	glBindBuffer(GL_ARRAY_BUFFER, vbos);
-	
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
 
 	targetLocation = vec4(_offsetX, _offsetY, 0, 0);
 	currentLocation = targetLocation;
@@ -133,7 +134,7 @@ void Disc::Create(float _offsetX, float _offsetY, vec4 _color)
 	// Define buffer size
 	glBufferData(GL_ARRAY_BUFFER, (sizeof(discPoints) + sizeof(discNormals)),
 		NULL, GL_STATIC_DRAW);
-
+	float count = sizeof(discPoints) + sizeof(discNormals);
 	// Define memory location for disc points and pass in array
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(discPoints), discPoints);
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(discPoints), sizeof(discNormals), discNormals);
@@ -152,20 +153,26 @@ void Disc::Create(float _offsetX, float _offsetY, vec4 _color)
 	
 	vColor = glGetUniformLocation(program, "vColor");
 	vOffsetGPULocation = glGetUniformLocation(program, "vOffset");
+
+	glBindVertexArray(0);
 }
 
 void Disc::Update()
 {
-	Draw();
 }
 
-void Disc::Draw()
+void Disc::Draw(GLuint _modelView, mat4 _modelMat)
 {
+	glUseProgram(program);
+	glUniformMatrix4fv(_modelView, 1, GL_TRUE, _modelMat);
+
 	vColor = glGetUniformLocation(program, "vColor");
 	vOffsetGPULocation = glGetUniformLocation(program, "vOffset");
-	glUseProgram(program);
+	
 	glUniform4fv(vOffsetGPULocation, 1, currentLocation);
 	glUniform4fv(vColor, 1, color);
+	
 	glBindVertexArray(vao);
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, discVerticesCount);
+	glBindVertexArray(0);
 }

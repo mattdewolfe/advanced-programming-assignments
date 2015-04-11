@@ -27,5 +27,8 @@ const GLuint Model::GetVbos() const
 }
 
 void Model::Destroy(){}
-void Model::Draw(){}
+void Model::Draw(GLuint _modelView, mat4 _modelMat)
+{
+
+}
 void Model::Update(){}

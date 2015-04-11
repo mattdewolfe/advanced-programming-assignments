@@ -12,7 +12,7 @@ public:
 	Model();
 	virtual ~Model();
 
-	virtual void Draw();
+	virtual void Draw(GLuint _modelView, mat4 _modelMat);
 	virtual void Update();
 	// Set the gl shader program for this model
 	virtual void SetProgram(GLuint shaderName);

@@ -106,34 +106,30 @@ void init()
 		tempOffsetY += 0.08f;
 	}
 
-	point4 light_position(0.0, 0.0, 0.0, 0.0);
-	color4 light_ambient(1.0, 0.0, 0.0, 1.0);
-	color4 other_ambient_light(1.0, 1.0, 1.0, 1.0);
-	color4 light_diffuse(0.0, 1.0, 0.0, 1.0);
-	color4 light_specular(1.0, 1.0, 1.0, 1.0);
+	// Initialize shader lighting parameters
+	point4 light_position(0.0, 0.0, 5.0, 0.0);
+	color4 light_color(1.0, 1.0, 1.0, 1.0);
 
-	color4 material_ambient(1.0, 1.0, 0.0, 1.0);
-	color4 material_diffuse(1.0, 0.8, 0.0, 1.0);
-	color4 material_specular(1.0, 0.8, 0.0, 1.0);
+	color4 material_diffuse(1.0, 1.0, 1.0, 1.0);
+	color4 material_specular(0.8, 0.8, 0.8, 1.0);
+	float  material_shininess = 80.0;
 	
-	float material_shininess = 100.0;
-		
-	color4 ambient_product = light_ambient * material_ambient;
+	/*color4 ambient_product = light_ambient * material_ambient;
 	color4 other_ambient_light_product = other_ambient_light * material_ambient;
 
 	color4 ambient_result = ambient_product + other_ambient_light_product;
 
 	color4 diffuse_product = light_diffuse * material_diffuse;
-	color4 specular_product = light_specular * material_specular;
+	color4 specular_product = light_specular * material_specular;*/
 
-	glUniform4fv(glGetUniformLocation(program, "AmbientProduct"),
-		1, ambient_result);
+	glUniform4fv(glGetUniformLocation(program, "DiffuseMat"),
+		1, material_diffuse);
 	
-	glUniform4fv(glGetUniformLocation(program, "DiffuseProduct"),
-		1, diffuse_product);
-	
-	glUniform4fv(glGetUniformLocation(program, "SpecularProduct"),
-		1, specular_product);
+	glUniform4fv(glGetUniformLocation(program, "SpecularMat"),
+		1, material_specular);
+
+	glUniform4fv(glGetUniformLocation(program, "LightColor"),
+	1, light_color);
 
 	glUniform4fv(glGetUniformLocation(program, "LightPosition"),
 		1, light_position);
@@ -152,6 +148,11 @@ void init()
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 
 	currentLevel = 0;
+
+	GLint nrAttributes;
+	glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &nrAttributes);
+	std::cout << "Maximum nr of vertex attributes supported: " << nrAttributes << std::endl;
+
 	nextLevel();
 }
 
@@ -173,11 +174,11 @@ void display(void)
 	// Iterate over all our objects and draw their verts
 	for (int i = 0; i < numberOfTowers; i++)
 	{
-		towers[i].Update();
+		towers[i].Draw(ModelView, model_view);
 	}
 	for (int i = 0; i < numberOfDiscs; i++)
 	{
-		discs[i]->Update();
+		discs[i]->Draw(ModelView, model_view);
 	}
 	glutSwapBuffers();
 }
@@ -324,13 +325,9 @@ void moveDisc()
 // Check disc locations to see if player has won
 void checkVictory()
 {
-	// Check if a given tower has every disc on it
-	for (int i = 1; i < numberOfTowers; i++)
-	{ 
-		if (towers[i].GetDiscCount() >= numberOfDiscs)
-		{
-			state = LevelComplete;
-		}
+	if (towers[numberOfTowers-1].GetDiscCount() >= numberOfDiscs)
+	{
+		state = LevelComplete;
 	}
 }
 

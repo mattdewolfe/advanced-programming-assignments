@@ -6,41 +6,38 @@ out vec4 color;
 
 uniform vec4 vOffset;
 uniform vec4 vColor;
-uniform vec4 AmbientProduct, DiffuseProduct, SpecularProduct;
+uniform vec4 DiffuseMat, SpecularMat;
 uniform mat4 ModelView;
 uniform mat4 Projection;
 uniform vec4 LightPosition;
+uniform vec4 LightColor;
 uniform float Shininess;
 
 void main()
 {
 	// Tranform position into eye coords, factoring in offset
-    vec3 pos = (ModelView * (vPosition + vOffset) ).xyz;
+    vec3 pos = (ModelView * vPosition).xyz;
 	
-    vec3 L = normalize( (ModelView*LightPosition).xyz - pos );
-    vec3 E = normalize( -pos );
-    vec3 H = normalize( L + E );
+	// Calc the ambient light
+    // Compute terms in the illumination equation
+    vec4 Ambient = 0.2f * LightColor;
 
-    // Transform vertex normal into eye coordinates
-    vec3 N = normalize( ModelView*vec4(vNormal, 0.0) ).xyz;
+	// Calc the diffuse light
+	vec3 Norm = normalize(vNormal);
+    vec3 LightDir = normalize(LightPosition.xyz - vPosition.xyz);
+    float Diff = max(dot(Norm, LightDir), 0.0);
+    vec4 Diffuse = Diff * LightColor;
 
-	// Compute terms in the illumination equation
-	vec4 ambient = AmbientProduct;
+	// Calc the specular light
+	vec3 ViewDir = normalize(pos.xyz - vPosition.xyz);
+    vec3 ReflectDir = reflect(-LightDir, Norm).xyz;
+	  
+    float SpecStr = pow(max(dot(ViewDir, ReflectDir), 0.0), Shininess);
 
-	float Kd = max( dot(L, N), 0.0 );
-	vec4 diffuse = Kd*DiffuseProduct;
-
-	float Ks = pow( max(dot(N, H), 0.0), Shininess );
-	vec4 specular = Ks * SpecularProduct;
+    vec4 Specular = SpecStr * SpecularMat * LightColor;  
     
-	if( dot(L, N) < 0.0 ) 
-	{
-		specular = vec4(0.0, 0.0, 0.0, 1.0);
-	} 
-
-	//color = ambient + diffuse + specular;
-	color = vColor;
-	
     gl_Position = Projection * ModelView * (vPosition + vOffset);
-	
+
+    color = (Ambient + Diffuse + Specular) * vColor;
+    color.a = 1.0;	
 }
