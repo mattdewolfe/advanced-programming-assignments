@@ -410,19 +410,19 @@ void nextLevel()
 	switch (currentLevel)
 	{
 	case 1:
-		numberOfDiscs = 4;
+		numberOfDiscs = 3;
 		numberOfTowers = 3;
 		break;
 	case 2:
-		numberOfDiscs = 5;
+		numberOfDiscs = 4;
 		numberOfTowers = 4;
 		break;
 	case 3:
 		numberOfDiscs = 6;
-		numberOfTowers = 3;
+		numberOfTowers = 4;
 		break;
 	default:
-		numberOfDiscs = 4;
+		numberOfDiscs = 3;
 		numberOfTowers = 3;
 		break;
 	}
